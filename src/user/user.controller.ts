@@ -21,4 +21,19 @@ export class UserController {
       throw error;
     }
   }
+  @Post('login')
+  async login(@Body() loginUserDto: LoginUserDto) {
+    this.logger.log(`Attempting login for user: ${loginUserDto.email}`);
+    try {
+      const result = await this.userService.login(loginUserDto);
+      this.logger.log(`Login successful for user: ${loginUserDto.email}`);
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `Login failed for user ${loginUserDto.email}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
 }

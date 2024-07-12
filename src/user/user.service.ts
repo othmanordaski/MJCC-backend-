@@ -72,4 +72,29 @@ export class UserService {
       throw new InternalServerErrorException('Failed to create user');
     }
   }
+
+  async login(loginUserDto: LoginUserDto) {
+    const { email, password } = loginUserDto;
+    this.logger.log(`Attemting login for user with email ${email}`);
+    const user = await this.findByEmail(email);
+    if (!user) {
+      this.logger.warn(
+        `Login attempt failed: No user found with email ${email}`,
+      );
+      throw new UnauthorizedException('Invalid Email or password!!');
+    }
+    this.logger.log(`User found, verifying password for ${email}`);
+    const isPasswordValid = await this.comparePassword(password, user.password);
+    if (!isPasswordValid) {
+      this.logger.warn(
+        `Login attempt failed: Invalid password for user ${email}`,
+      );
+      throw new UnauthorizedException('Invalid email or password');
+    }
+    this.logger.log(`Login successful for user ${email}`);
+    return {
+      message: 'Login successful',
+      user: { id: user.id, email: user.email, username: user.username },
+    };
+  }
 }
