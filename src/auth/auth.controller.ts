@@ -1,13 +1,28 @@
-import { Controller, Post, Body, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Logger, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { Response } from 'express';
 import { CreateUserDto, LoginUserDto } from './dto';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(private readonly authService: AuthService) {}
-
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
+  private setCookie(res: Response, token: string) {
+    const cookieOptions = {
+      httpOnly: true,
+      secure: this.configService.get<string>('NODE_ENV') === 'production',
+      maxAge:
+        parseInt(this.configService.get<string>('JWT_EXPIRATION') || '3600') *
+        1000,
+      path: '/',
+    };
+    res.cookie('jwt', token, cookieOptions);
+  }
   @Post('signup')
   async signup(@Body() createUserDto: CreateUserDto) {
     this.logger.log(
@@ -24,11 +39,15 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() loginUserDto: LoginUserDto) {
+  async login(
+    @Body() loginUserDto: LoginUserDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     this.logger.log(`Attempting login for user: ${loginUserDto.email}`);
     try {
       const result = await this.authService.login(loginUserDto);
       this.logger.log(`Login successful for user: ${loginUserDto.email}`);
+      this.setCookie(res, result.access_token);
       return result;
     } catch (error) {
       this.logger.error(

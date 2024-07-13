@@ -7,6 +7,8 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto, LoginUserDto } from './dto';
 import { UsersService } from '../users/users.service';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -14,7 +16,11 @@ export class AuthService {
   private readonly saltRounds = 12;
   private readonly logger = new Logger(AuthService.name);
 
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
 
   private async hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, this.saltRounds);
@@ -25,6 +31,17 @@ export class AuthService {
     hashedPassword: string,
   ): Promise<boolean> {
     return bcrypt.compare(password, hashedPassword);
+  }
+  private generateToken(
+    userId: string,
+    username: string,
+    email: string,
+  ): string {
+    const payload = { sub: userId, username, email };
+    return this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_EXPIRATION'),
+    });
   }
 
   async signup(createUserDto: CreateUserDto) {
@@ -87,11 +104,12 @@ export class AuthService {
       );
       throw new UnauthorizedException('Invalid email or password');
     }
-
+    const token = this.generateToken(user.id, user.username, user.email);
     this.logger.log(`Login successful for user ${email}`);
     return {
       message: 'Login successful',
       user: { id: user.id, email: user.email, username: user.username },
+      access_token: token,
     };
   }
 }
