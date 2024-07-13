@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpExceptionFilter } from './filters/http-exception.filter';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import * as express from 'express';
 import helmet from 'helmet';
 
