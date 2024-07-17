@@ -4,6 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
+  Check,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
@@ -12,30 +14,33 @@ export enum UserRole {
   ADMIN = 'admin',
 }
 
-@Entity()
+@Entity('users')
+@Check(`"email" ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z]{2,}$'`)
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', length: 50, unique: true })
+  @Index()
   username: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', length: 255, unique: true })
+  @Index()
   email: string;
 
-  @Column()
+  @Column({ type: 'varchar', length: 60 })
   @Exclude()
   password: string;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   isVerified: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp with time zone' })
   updateAt: Date;
 }
