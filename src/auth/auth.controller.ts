@@ -30,7 +30,7 @@ export class AuthController {
     );
     try {
       const result = await this.authService.signup(createUserDto);
-      this.logger.log(`User created successfully: ${result.user.email}`);
+      this.logger.log(`User created successfully: ${createUserDto.email}`);
       return result;
     } catch (error) {
       this.logger.error(`Failed to create user: ${error.message}`, error.stack);

@@ -10,6 +10,11 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { VerificationToken } from '../users/entities/verification-token.entity';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -17,13 +22,19 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
+    @InjectRepository(VerificationToken)
+    private verificationTokenRepository: Repository<VerificationToken>,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
 
   private async hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, this.saltRounds);
+  }
+  private generateVerificationToken(): string {
+    return crypto.randomBytes(32).toString('hex');
   }
 
   private async comparePassword(
@@ -65,15 +76,25 @@ export class AuthService {
 
     try {
       this.logger.log(`Creating new user with email ${email}`);
-      const user = await this.usersService.create({
+      const savedUser = await this.usersService.create({
         email,
         username,
         password: hashedPassword,
       });
       this.logger.log(`User with email ${email} created successfully`);
+      const token = this.generateVerificationToken();
+      const verificationToken = this.verificationTokenRepository.create({
+        userId: savedUser.id,
+        token,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      });
+      await this.verificationTokenRepository.save(verificationToken);
+
+      await this.mailService.sendVerificationEmail(email, token);
+
       return {
-        message: 'Successfully created your account',
-        user: { id: user.id, email: user.email, username: user.username },
+        message:
+          'User created successfully. Please check your email to verify your account.',
       };
     } catch (error) {
       this.logger.error(
