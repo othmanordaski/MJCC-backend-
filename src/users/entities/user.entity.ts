@@ -6,8 +6,10 @@ import {
   UpdateDateColumn,
   Index,
   Check,
+  OneToMany,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { VerificationToken } from './verification-token.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -43,4 +45,6 @@ export class User {
 
   @UpdateDateColumn({ type: 'timestamp with time zone' })
   updateAt: Date;
+  @OneToMany(() => VerificationToken, (token) => token.user)
+  verificationTokens: VerificationToken[];
 }
