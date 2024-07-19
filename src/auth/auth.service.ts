@@ -133,4 +133,33 @@ export class AuthService {
       access_token: token,
     };
   }
+  async verify(token: string) {
+    this.logger.log(`Attempting to verify token: ${token}`);
+    try {
+      const verificationToken =
+        await this.usersService.findVerificationToken(token);
+      if (!verificationToken) {
+        this.logger.warn(`Token ${token} not found`);
+        throw new UnauthorizedException('Invalid token');
+      }
+      if (verificationToken.expiresAt < new Date()) {
+        this.logger.warn(`Token ${token} has expired`);
+        throw new UnauthorizedException('Token has expired');
+      }
+      const user = await this.usersService.findById(verificationToken.userId);
+      if (!user) {
+        this.logger.warn(`User not found for token ${token}`);
+        throw new UnauthorizedException('Invalid token');
+      }
+      const result = await this.usersService.verifyUser(user);
+      this.logger.log(`Token ${token} verified successfully`);
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `Failed to verify token: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
 }
