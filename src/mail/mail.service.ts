@@ -1,16 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import Mailgun from 'mailgun.js';
-import formData from 'form-data';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+
+const formData = require('form-data');
 @Injectable()
 export class MailService {
   private mg: Mailgun;
+  private readonly logger = new Logger(MailService.name);
   constructor(private configService: ConfigService) {
     this.mg = new Mailgun(formData);
   }
   private async readTemplate(templateName: string): Promise<string> {
+    this.logger.debug(`Reading email template: ${templateName}`);
     const templatePath = path.join(
       process.cwd(),
       'src',
@@ -18,6 +21,7 @@ export class MailService {
       'templates',
       `${templateName}.template.html`,
     );
+    this.logger.debug(`Template path: ${templatePath}`);
     return fs.readFile(templatePath, 'utf-8');
   }
 
@@ -38,10 +42,13 @@ export class MailService {
   ): Promise<void> {
     const domain = this.configService.get<string>('MAILGUN_DOMAIN');
     const apiKey = this.configService.get<string>('MAILGUN_API_KEY');
+    console.log('Domain:', domain);
+    console.log('API Key:', apiKey);
     const client = this.mg.client({ username: 'api', key: apiKey });
 
     const template = await this.readTemplate(templateName);
     const html = await this.compileTemplate(template, templateData);
+    console.log('Email HTML:', html);
 
     const messageData = {
       from: `Your App <noreply@${domain}>`,
@@ -53,12 +60,14 @@ export class MailService {
       const response = await client.messages.create(domain, messageData);
       console.log('Email sent successfully:', response);
     } catch (error) {
+      this.logger.error('Error sending email:', error);
       console.error('Error sending email:', error);
       throw new Error(`Failed to send email: ${error.message}`);
     }
   }
   async sendVerificationEmail(to: string, token: string): Promise<void> {
     const verificationLink = `${this.configService.get('APP_URL')}/verify?token=${token}`;
+    console.log('Verification link:', verificationLink);
     await this.sendEmail(to, 'Verify Your Email', 'verification-email', {
       verificationLink,
     });
