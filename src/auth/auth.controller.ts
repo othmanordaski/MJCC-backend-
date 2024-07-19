@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Logger, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Logger,
+  Res,
+  HttpCode,
+  Get,
+  Query,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { CreateUserDto, LoginUserDto } from './dto';
@@ -39,6 +48,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(200)
   async login(
     @Body() loginUserDto: LoginUserDto,
     @Res({ passthrough: true }) res: Response,
@@ -52,6 +62,21 @@ export class AuthController {
     } catch (error) {
       this.logger.error(
         `Login failed for user ${loginUserDto.email}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+  @Get('verify')
+  async verify(@Query('token') token: string) {
+    this.logger.log(`Attempting to verify token: ${token}`);
+    try {
+      const result = await this.authService.verify(token);
+      this.logger.log(`Token verified successfully: ${token}`);
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `Failed to verify token: ${error.message}`,
         error.stack,
       );
       throw error;
