@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { VerificationToken } from './verification-token.entity';
+import { ForgetToken } from 'src/reset-password/entities/forget-token.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -47,4 +48,6 @@ export class User {
   updateAt: Date;
   @OneToMany(() => VerificationToken, (token) => token.user)
   verificationTokens: VerificationToken[];
+  @OneToMany(() => ForgetToken, (token) => token.user)
+  forgetTokens: ForgetToken[];
 }

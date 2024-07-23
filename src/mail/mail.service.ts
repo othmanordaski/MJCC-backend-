@@ -66,10 +66,17 @@ export class MailService {
     }
   }
   async sendVerificationEmail(to: string, token: string): Promise<void> {
-    const verificationLink = `${this.configService.get('APP_URL')}/verify?token=${token}`;
+    const verificationLink = `${this.configService.get('APP_URL')}/verify-email?token=${token}`;
     console.log('Verification link:', verificationLink);
     await this.sendEmail(to, 'Verify Your Email', 'verification-email', {
       verificationLink,
+    });
+  }
+  async sendForgetPasswordEmail(to: string, token: string): Promise<void> {
+    const forgetLink = `${this.configService.get('APP_URL')}/reset-password?token=${token}`;
+    console.log('Forget link:', forgetLink);
+    await this.sendEmail(to, 'Reset Your Password', 'forget-password-email', {
+      forgetLink,
     });
   }
 }

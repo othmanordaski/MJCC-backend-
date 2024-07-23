@@ -33,7 +33,9 @@ export class AuthController {
     res.cookie('jwt', token, cookieOptions);
   }
   @Post('signup')
-  async signup(@Body() createUserDto: CreateUserDto) {
+  async signup(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<{ message: string }> {
     this.logger.log(
       `Attempting to create user with email: ${createUserDto.email}`,
     );
