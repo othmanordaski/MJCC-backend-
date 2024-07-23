@@ -55,7 +55,7 @@ export class AuthService {
     });
   }
 
-  async signup(createUserDto: CreateUserDto) {
+  async signup(createUserDto: CreateUserDto): Promise<{ message: string }> {
     const { email, username, password } = createUserDto;
 
     this.logger.log(`Checking if email ${email} already exists`);
