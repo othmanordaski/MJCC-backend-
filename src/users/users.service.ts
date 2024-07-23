@@ -31,6 +31,7 @@ export class UsersService {
   async findVerificationToken(token: string): Promise<VerificationToken> {
     return this.tokenRepository.findOne({ where: { token } });
   }
+
   async verifyUser(user: User): Promise<User> {
     user.isVerified = true;
     return this.userRepository.save(user);
