@@ -36,4 +36,8 @@ export class UsersService {
     user.isVerified = true;
     return this.userRepository.save(user);
   }
+  async updatePassword(user: User, password: string): Promise<User> {
+    user.password = password;
+    return this.userRepository.save(user);
+  }
 }
