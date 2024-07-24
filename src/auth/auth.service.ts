@@ -30,14 +30,14 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
-  private async hashPassword(password: string): Promise<string> {
+  async hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, this.saltRounds);
   }
   private generateVerificationToken(): string {
     return crypto.randomBytes(32).toString('hex');
   }
 
-  private async comparePassword(
+  async comparePassword(
     password: string,
     hashedPassword: string,
   ): Promise<boolean> {
